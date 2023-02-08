@@ -85,7 +85,7 @@ def main(args):
     graph = []
     ids = []
     
-    def get_verter_number(id: str) -> int:
+    def get_vertex_number(id: str) -> int:
         if id not in id_to_vertex_number:
             vertex_number = len(id_to_vertex_number)
             id_to_vertex_number[id] = vertex_number
@@ -94,8 +94,8 @@ def main(args):
         return id_to_vertex_number[id]
     
     def add_edge(id1, id2):
-        v1 = get_verter_number(id1)
-        v2 = get_verter_number(id2)
+        v1 = get_vertex_number(id1)
+        v2 = get_vertex_number(id2)
         graph[v1].append(v2)
         graph[v2].append(v1)
     
