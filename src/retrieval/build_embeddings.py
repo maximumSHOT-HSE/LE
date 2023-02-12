@@ -25,6 +25,8 @@ def parse_args():
 
 def mean_pooling(model_output, attention_mask):
     token_embeddings = model_output[0] #First element of model_output contains all token embeddings
+    token_embeddings = token_embeddings.cpu()
+    attention_mask = attention_mask.cpu()
     input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
     return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
@@ -35,13 +37,15 @@ def normalize(x, eps: float = 1e-9):
 
 
 def apply_encoder(model, ds: Dataset):
-    model = model.eval()
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"apply encoder on device = {device}", flush=True)
+    model = model.eval().to(device)
     embeddings = []
     with torch.no_grad():
         for sample in tqdm(ds):
-            input_ids = torch.Tensor(sample["input_ids"]).long()
-            token_type_ids = torch.Tensor(sample["token_type_ids"]).long()
-            attention_mask = torch.Tensor(sample["attention_mask"]).long()
+            input_ids = torch.Tensor(sample["input_ids"]).long().to(device)
+            token_type_ids = torch.Tensor(sample["token_type_ids"]).long().to(device)
+            attention_mask = torch.Tensor(sample["attention_mask"]).long().to(device)
             model_out = model(
                 input_ids=input_ids,
                 token_type_ids=token_type_ids,

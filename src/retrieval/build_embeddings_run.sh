@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --time=15-00:00:00
-#SBATCH --gpus=0
+#SBATCH --gpus=1
 #SBATCH --cpus-per-task=4
 
 
