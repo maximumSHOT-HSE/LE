@@ -8,6 +8,7 @@ from collections import deque, Counter
 from typing import List
 import numpy as np
 import os
+from copy import deepcopy
 
 
 def get_parser():
@@ -22,7 +23,8 @@ def get_parser():
             Find all connectivity components
             Analyse their sizes and try to split them into folds in the following way:
                 random shuffle components, then split them into n_folds parts iteratively
-                adding elements to the minimum size fold
+                adding elements to the fold with the minimum number of topics.
+                Content will be shared among folds
         """
     )
     parser.add_argument("--topics-ds-path", type=str, required=True)
@@ -106,38 +108,45 @@ def main(args):
             add_edge(topic_id, content_id)
         
     component_id = get_components(graph)
-    component_id_to_vertices = [[] for _ in component_id]
+    component_id_to_vertices = [[] for _ in range(max(component_id) + 1)]
     for v, cid in enumerate(component_id):
         component_id_to_vertices[cid].append(v)
     
     component_ids_ar = []
     component_sizes_ar = []
-    for cid, sz in Counter(component_id).items():
-        component_ids_ar.append(cid)
-        component_sizes_ar.append(sz)
+    for cid, vs in enumerate(component_id_to_vertices):
+        n_topics_in_component = sum(1 for v in vs if ids[v].startswith("t_"))
+        if n_topics_in_component > 0:
+            component_ids_ar.append(cid)
+            component_sizes_ar.append(n_topics_in_component)
     
     folds = split_array_into_folds(component_sizes_ar, args.n_folds)
     
     topics_ds = Dataset.load_from_disk(args.topics_ds_path)
     content_ds = Dataset.load_from_disk(args.content_ds_path)
     
-    for fold_id, fold in tqdm(enumerate(folds)):
-        fold = list(map(lambda j: component_ids_ar[j], fold))
+    for fold_id, fold_cids in tqdm(enumerate(folds)):
+        fold_cids = list(map(lambda j: component_ids_ar[j], fold_cids))
         fold_ids = set()
-        for cid in fold:
+        for cid in fold_cids:
             for v in component_id_to_vertices[cid]:
                 id = ids[v]
-                fold_ids.add(id)
+                if id.startswith("t_"):
+                    fold_ids.add(id)
         
-        fold_topics_ds = topics_ds.filter(lambda x: x["id"] in fold_ids)
-        fold_content_ds = content_ds.filter(lambda x: x["id"] in fold_ids)
+        train_fold_topics_ds = topics_ds.filter(lambda x: x["id"] not in fold_ids)
+        validation_fold_topics_ds = topics_ds.filter(lambda x: x["id"] in fold_ids)
+        fold_content_ds = deepcopy(content_ds)
         
-        fold_dd = DatasetDict({"topics": fold_topics_ds, "content": fold_content_ds})
+        fold_dd = DatasetDict({
+            "train_topics": train_fold_topics_ds,
+            "validation_topics": validation_fold_topics_ds, 
+            "content": fold_content_ds
+        })
         fold_path = os.path.join(f"{args.save_dir}.seed_{args.seed}.n_folds_{args.n_folds}", f"fold_{fold_id}")
         print(f"save to = {fold_path}")
         fold_dd.save_to_disk(fold_path)
         
-
 
 if __name__ == "__main__":
     args = parse_args()
