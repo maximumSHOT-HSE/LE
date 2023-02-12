@@ -18,11 +18,11 @@ def parse_args():
 
 def build_content_full_text(x):
     return (
-        x["title"] + "[SEP]" +\
-        x["language"] + "[SEP]" +\
-        x["kind"] + "[SEP]" +\
-        x["description"] + "[SEP]" +\
-        x["text"]
+        x["title"] + "[SEP]" \
+        + x["language"] + "[SEP]" \
+        + x["kind"] + "[SEP]" \
+        + x["description"] + "[SEP]" \
+        # + x["text"]
     ).replace("\n", "*").replace("\t", "*")
 
 
