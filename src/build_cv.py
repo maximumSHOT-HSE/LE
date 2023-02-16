@@ -115,10 +115,8 @@ def main(args):
     component_ids_ar = []
     component_sizes_ar = []
     for cid, vs in enumerate(component_id_to_vertices):
-        n_topics_in_component = sum(1 for v in vs if ids[v].startswith("t_"))
-        if n_topics_in_component > 0:
-            component_ids_ar.append(cid)
-            component_sizes_ar.append(n_topics_in_component)
+        component_ids_ar.append(cid)
+        component_sizes_ar.append(len(vs))
     
     folds = split_array_into_folds(component_sizes_ar, args.n_folds)
     
@@ -131,17 +129,18 @@ def main(args):
         for cid in fold_cids:
             for v in component_id_to_vertices[cid]:
                 id = ids[v]
-                if id.startswith("t_"):
-                    fold_ids.add(id)
+                fold_ids.add(id)
         
         train_fold_topics_ds = topics_ds.filter(lambda x: x["id"] not in fold_ids)
         validation_fold_topics_ds = topics_ds.filter(lambda x: x["id"] in fold_ids)
-        fold_content_ds = deepcopy(content_ds)
+        train_fold_content_ds = content_ds.filter(lambda x: x["id"] not in fold_ids)
+        validation_fold_content_ds = content_ds.filter(lambda x: x["id"] in fold_ids)
         
         fold_dd = DatasetDict({
             "train_topics": train_fold_topics_ds,
             "validation_topics": validation_fold_topics_ds, 
-            "content": fold_content_ds
+            "train_content": train_fold_content_ds,
+            "validation_content": validation_fold_content_ds
         })
         fold_path = os.path.join(f"{args.save_dir}.seed_{args.seed}.n_folds_{args.n_folds}", f"fold_{fold_id}")
         print(f"save to = {fold_path}")

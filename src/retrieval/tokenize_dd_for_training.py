@@ -28,14 +28,12 @@ def main(args):
             x["topic_full_text"],
             padding="max_length",
             truncation=True,
-            return_tensors="np",
             max_length=128
         )
         content_data = tokenizer(
             x["content_full_text"],
             padding="max_length",
             truncation=True,
-            return_tensors="np",
             max_length=128
         )
         return_data = {}
