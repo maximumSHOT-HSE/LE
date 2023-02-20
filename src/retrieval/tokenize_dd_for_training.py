@@ -25,13 +25,13 @@ def main(args):
     
     def tokenize_fn(x):
         topic_data = tokenizer(
-            x["topic_full_text"],
+            x["topic_text"],
             padding="max_length",
             truncation=True,
             max_length=128
         )
         content_data = tokenizer(
-            x["content_full_text"],
+            x["content_text"],
             padding="max_length",
             truncation=True,
             max_length=128

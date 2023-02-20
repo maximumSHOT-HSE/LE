@@ -4,10 +4,9 @@ import torch
 
 class AutoModelForSentenceEmbedding(nn.Module):
     
-    def __init__(self, model, tokenizer, normalize=True):
+    def __init__(self, model, normalize=True):
         super().__init__()
         self.model = model
-        self.tokenizer = tokenizer
         self.normalize = normalize
 
     def forward(self, **kwargs):
@@ -18,8 +17,8 @@ class AutoModelForSentenceEmbedding(nn.Module):
         return embeddings
 
     def do_normalize(self, x, eps: float = 1e-9):
-        l2_norm = torch.linalg.vector_norm(x, ord=2)
-        return x / max(l2_norm, eps)
+        l2_norm = torch.linalg.vector_norm(x, ord=2).clamp_min(eps)
+        return x.div(l2_norm)
     
     def mean_pooling(self, model_output, attention_mask):
         token_embeddings = model_output[0]  # First element of model_output contains all token embeddings

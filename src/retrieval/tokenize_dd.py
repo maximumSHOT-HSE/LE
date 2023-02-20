@@ -8,6 +8,7 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dd-path", type=str, required=True, help="Path to the HF dd")
     parser.add_argument("--tokenizer", type=str, required=True, help="Path to the dir with tokenizer")
+    parser.add_argument("--max-seq-len", type=int, required=True)
     parser.add_argument("--save-path", type=str, required=False, help="Path where HF dd with tokens will be saved")
     return parser
 
@@ -28,7 +29,8 @@ def main(args):
             x["full_text"], 
             padding="max_length", 
             truncation=True,
-            max_length=128
+            max_length=args.max_seq_len,
+            add_special_tokens=True
         )
     )
 

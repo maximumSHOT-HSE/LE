@@ -7,7 +7,8 @@
 
 DD_PATH=$1
 TOKENIZER=$2
-SAVE_PATH=$3
+MAX_SEQ_LEN=$3
+SAVE_PATH=$4
 
 export PYTHONPATH=$PYTHONPATH:/home/mksurkov/LE
 
@@ -16,4 +17,5 @@ singularity exec --nv ~/containers/container.sif python3 \
     src/retrieval/tokenize_dd.py \
         --dd-path $DD_PATH \
         --tokenizer $TOKENIZER \
+        --max-seq-len $MAX_SEQ_LEN \
         --save-path $SAVE_PATH ;
