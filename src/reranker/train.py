@@ -9,6 +9,7 @@ import os
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from scipy.special import softmax
 from torch.utils.checkpoint import checkpoint
+from src.utils import calculate_f_beta_score
 
 
 def get_parser():
@@ -50,14 +51,32 @@ def load_training_args(training_args_config):
     return training_args
 
 
-def compute_metrics(predictions: EvalPrediction):
+def compute_metrics(predictions: EvalPrediction, base_recall: float):
     y_true = predictions.label_ids
-    y_pred = predictions.predictions.argmax(axis=1)
+    y_pred = predictions.predictions.argmax(axis=1)  # threshold == 0.5
+    
+    precision = precision_score(y_true=y_true, y_pred=y_pred, average='macro')
+    recall = recall_score(y_true=y_true, y_pred=y_pred, average='macro')
+    recall_with_base = recall * base_recall
+    
+    f1_score = calculate_f_beta_score(precision, recall, beta=1)
+    f2_score = calculate_f_beta_score(precision, recall, beta=2)
+        
+    f1_score_with_base = calculate_f_beta_score(precision, recall_with_base, beta=1)
+    f2_score_with_base = calculate_f_beta_score(precision, recall_with_base, beta=2)
+
     return {
-        'accuracy': accuracy_score(y_true=y_true, y_pred=y_pred),
-        'precision': precision_score(y_true=y_true, y_pred=y_pred, average='macro'),
-        'recall': recall_score(y_true=y_true, y_pred=y_pred, average='macro'),
-        'f1-score': f1_score(y_true=y_true, y_pred=y_pred, average='macro')
+        "accuracy": accuracy_score(y_true=y_true, y_pred=y_pred),
+        
+        "precision": precision,
+        "recall": recall,
+        "f1-score": f1_score,
+        "f2-score": f2_score,
+        
+        "base-recall": base_recall,
+        "recall-with-base": recall_with_base,
+        "f1-score-with-base": f1_score_with_base,
+        "f2-score-with-base": f2_score_with_base
     }
 
 
@@ -84,7 +103,7 @@ def main(args):
         train_dataset=dd["train"],
         eval_dataset=dd["validation"],
         tokenizer=tokenizer,
-        compute_metrics=compute_metrics
+        compute_metrics=lambda p: compute_metrics(p, training_config.get("base_recall", 1.0))
     )
     trainer.train()
 

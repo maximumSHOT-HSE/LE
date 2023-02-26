@@ -7,8 +7,9 @@ from pathlib import Path
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--tokenizer-path", type=str, required=True)
+    parser.add_argument("--retriever-tokenizer-path", type=str, required=True)
     parser.add_argument("--retriever-path", type=str, required=True)
+    parser.add_argument("--reranker-tokenizer-path", type=str, required=True)
     parser.add_argument("--reranker-path", type=str, required=True)
     parser.add_argument("--save-path", type=str, required=True)
     return parser
@@ -34,9 +35,15 @@ def find_best_checkpoint(dir_path: str, metric_name: str = "eval_f1-score") -> s
 
 
 def main(args):
-    os.makedirs(args.save_path, exist_ok=False)
-    shutil.copytree(args.tokenizer_path, os.path.join(args.save_path, "tokenizer"), dirs_exist_ok=False)
-    shutil.copytree(args.retriever_path, os.path.join(args.save_path, "retriever"), dirs_exist_ok=False)
+    shutil.copytree(args.retriever_tokenizer_path, os.path.join(args.save_path, "retriever_tokenizer"), dirs_exist_ok=False)
+    
+    shutil.copytree(
+        os.path.join(args.retriever_path, "st_checkpoints"),
+        os.path.join(args.save_path, "retriever", "st_checkpoints"),
+        dirs_exist_ok=False
+    )
+
+    shutil.copytree(args.reranker_tokenizer_path, os.path.join(args.save_path, "reranker_tokenizer"), dirs_exist_ok=False)
     
     for f in os.listdir(args.reranker_path):
         if f.startswith("fold_"):

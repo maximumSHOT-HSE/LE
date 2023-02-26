@@ -25,8 +25,10 @@ def parse_args():
 def main(args):
     dd = DatasetDict.load_from_disk(args.dd_path)
 
-    topics_X = np.array(dd["validation_topics"]["embedding"]).squeeze()
+    topics_X = np.array(dd["validation_topics"]["embedding"] + dd["train_topics"]["embedding"]).squeeze()
     content_X = np.array(dd["train_content"]["embedding"] + dd["validation_content"]["embedding"]).squeeze()
+    
+    n_validation_topic_ids = len(dd["validation_topics"])
     
     n_train_content_ids = len(dd["train_content"])
     n_validation_content_ids = len(dd["validation_content"])
@@ -43,7 +45,8 @@ def main(args):
     data = defaultdict(list)
     
     for i in tqdm(range(len(topics_X))):
-        topic_id = dd["validation_topics"][i]["id"]
+        topic_id = dd["validation_topics"][i]["id"] if i < n_validation_topic_ids else \
+            dd["train_topics"][i - n_validation_topic_ids]["id"]
         content_ids = " ".join(
             list(map(
                 lambda j: dd["train_content"][int(j)]["id"] if j < n_train_content_ids else \

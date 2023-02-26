@@ -14,6 +14,7 @@ def get_parser():
     parser.add_argument("--st-name", type=str, required=True, help="The name of Sentence Transformer to be trained")
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--num-epochs", type=int, default=10)
+    parser.add_argument("--full", type=int, default=0)
     return parser
 
 
@@ -26,11 +27,16 @@ def main(args):
     print(dd)
     
     train_examples = []
-    for row in tqdm(dd["train"]):
-        topic_text = row["topic_text"]
-        content_text = row["content_text"]
-        train_examples.append(InputExample(texts=[topic_text, content_text]))
-    
+    keys = ["train"]
+    if args.full:
+        keys.append("validation")
+    for key in keys:
+        print(f"add data from {key} part", flush=True)
+        for row in tqdm(dd[key]):
+            topic_text = row["topic_text"]
+            content_text = row["content_text"]
+            train_examples.append(InputExample(texts=[topic_text, content_text]))
+
     model = SentenceTransformer(args.st_name)
     print(model)
     train_dataloader = DataLoader(train_examples, shuffle=True, batch_size=args.batch_size)
@@ -41,7 +47,7 @@ def main(args):
     model.fit(
         train_objectives=[(train_dataloader, train_loss)],
         epochs=num_epochs,
-        save_best_model = True,
+        save_best_model=True,
         output_path=os.path.join(args.exp_dir_path, "st_checkpoints"),
         warmup_steps=warmup_steps
     )

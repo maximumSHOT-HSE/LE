@@ -1,6 +1,6 @@
 import argparse
 import json
-from datasets import DatasetDict
+from datasets import Dataset, DatasetDict
 from transformers import AutoTokenizer
 
 
@@ -17,13 +17,16 @@ def parse_args():
 
 
 def main(args):
-    dd = DatasetDict.load_from_disk(args.dd_path)
-    print(dd)
+    try:
+        data = DatasetDict.load_from_disk(args.dd_path)
+    except:
+        data = Dataset.load_from_disk(args.dd_path)
+    print(data)
     
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
     print(tokenizer)
     
-    dd = dd.map(
+    data = data.map(
         lambda x: tokenizer(
             x["topic_full_text"], 
             x["content_full_text"],
@@ -34,7 +37,7 @@ def main(args):
     )
 
     save_path = args.dd_path if args.save_path is None else args.save_path
-    dd.save_to_disk(save_path)
+    data.save_to_disk(save_path)
 
 
 if __name__ == "__main__":

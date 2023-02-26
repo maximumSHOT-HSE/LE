@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dd-path", type=str, required=True, help="Path to the HF dd with tokens")
+    parser.add_argument("--dd-path", type=str, required=True)
     parser.add_argument("--candidates-csv-path", type=str, required=True, help="Path to the csv files with retrieved candidates")
     parser.add_argument("--correlations-csv-path", type=str, required=True, help="Path to the csv file with positive samples")
     parser.add_argument("--save-path", type=str, required=True, 
@@ -20,7 +20,12 @@ def parse_args():
     return get_parser().parse_args()
 
 
-def construct_BC_dataset(topics_ds, content_id_to_full_text, topic_id_to_candidates_content_ids, topic_id_to_correlated_content_ids):
+def construct_BC_dataset(
+    topics_ds, 
+    content_id_to_full_text, 
+    topic_id_to_candidates_content_ids, 
+    topic_id_to_correlated_content_ids
+):
     data = defaultdict(list)
     
     def add_sample(topic_id, content_id, topic_full_text, label):
@@ -59,10 +64,10 @@ def main(args):
         for row in tqdm(correlations_df.iloc, total=len(correlations_df))
     }
     
-    content_id_to_full_text = {
-        row["id"]: row["full_text"]
-        for row in tqdm(dd["content"], total=len(dd["content"]))
-    }
+    content_id_to_full_text = {}
+    for key in ["train_content", "validation_content"]:
+        for row in tqdm(dd[key]):
+            content_id_to_full_text[row["id"]] = row["full_text"]
     
     train_ds = construct_BC_dataset(
         dd["train_topics"], 
