@@ -42,7 +42,7 @@ def main(args):
         f1_score = calculate_f_beta_score(precision, recall, beta=1)
         f2_score = calculate_f_beta_score(precision, recall, beta=2)
         
-        metric_name_to_values["predicion"].append(precision)
+        metric_name_to_values["precision"].append(precision)
         metric_name_to_values["recall"].append(recall)
         metric_name_to_values["f1-score"].append(f1_score)
         metric_name_to_values["f2-score"].append(f2_score)
