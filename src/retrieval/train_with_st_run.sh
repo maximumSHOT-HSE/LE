@@ -9,7 +9,8 @@ EXP_DIR_PATH=$2
 ST_NAME=$3
 BATCH_SIZE=$4
 NUM_EPOCHS=$5
-FULL=$6
+CHECKPOINT_SAVE_STEPS=$6
+FULL=$7
 
 export PYTHONPATH=$PYTHONPATH:/home/mksurkov/LE
 
@@ -21,4 +22,5 @@ singularity exec --nv ~/containers/container.sif python3 \
         --st-name $ST_NAME \
         --batch-size $BATCH_SIZE \
         --num-epochs $NUM_EPOCHS \
+        --checkpoint_save_steps $CHECKPOINT_SAVE_STEPS \
         --full $FULL ;

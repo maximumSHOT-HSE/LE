@@ -19,18 +19,24 @@ def parse_args():
     return get_parser().parse_args()
 
 
-def find_best_checkpoint(dir_path: str, metric_name: str = "eval_f1-score") -> str:
+def find_best_checkpoint(dir_path: str, metric_name: str = "eval_f2-score-with-base") -> str:
+    if not os.path.exists(dir_path):
+        return None
     max_metric_value = None
     best_cp_name = None
     for f in os.listdir(dir_path):
         if not f.startswith("checkpoint-"):
             continue
-        with open(os.path.join(dir_path, f, "trainer_state.json"), "r") as fn:
-            trainer_state_d = json.load(fn)
-            metric_value = trainer_state_d["log_history"][-1][metric_name]
-            if best_cp_name is None or max_metric_value < metric_value:
-                max_metric_value = metric_value
-                best_cp_name = os.path.join(dir_path, f)
+        ckpt_id = int(f[len("checkpoint-"):])
+        if best_cp_name is None or max_metric_value < ckpt_id:
+            max_metric_value = ckpt_id
+            best_cp_name = os.path.join(dir_path, f)
+        # with open(os.path.join(dir_path, f, "trainer_state.json"), "r") as fn:
+        #     trainer_state_d = json.load(fn)
+        #     metric_value = trainer_state_d["log_history"][-1][metric_name]
+        #     if best_cp_name is None or max_metric_value < metric_value:
+        #         max_metric_value = metric_value
+        #         best_cp_name = os.path.join(dir_path, f)
     return best_cp_name
 
 
@@ -38,7 +44,7 @@ def main(args):
     shutil.copytree(args.retriever_tokenizer_path, os.path.join(args.save_path, "retriever_tokenizer"), dirs_exist_ok=False)
     
     shutil.copytree(
-        os.path.join(args.retriever_path, "st_checkpoints"),
+        os.path.join(args.retriever_path),
         os.path.join(args.save_path, "retriever", "st_checkpoints"),
         dirs_exist_ok=False
     )
@@ -48,6 +54,8 @@ def main(args):
     for f in os.listdir(args.reranker_path):
         if f.startswith("fold_"):
             best_cp_name = find_best_checkpoint(os.path.join(args.reranker_path, f, "outs"))
+            if best_cp_name is None:
+                continue
             shutil.copytree(best_cp_name, os.path.join(args.save_path, "reranker", f, "checkpoint"), dirs_exist_ok=False)
             for ff in os.listdir(os.path.join(args.reranker_path, f)):
                 if ff.startswith("outs"):

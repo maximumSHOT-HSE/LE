@@ -20,16 +20,17 @@ def parse_args():
 
 
 def build_reranked_candidates(ds, threshold):
-    topic_id_to_candidates = defaultdict(list)
+    topic_id_to_candidates = defaultdict(list)    
     for row in tqdm(ds):
         topic_id = row["topic_id"]
         content_id = row["content_id"]
         proba = row["proba"]
         if proba > threshold:
-            topic_id_to_candidates[topic_id].append(content_id)
+            topic_id_to_candidates[topic_id].append((content_id, proba))
     candidates_data = defaultdict(list)
     for topic_id, content_ids_list in topic_id_to_candidates.items():
-        content_ids = " ".join(sorted(set(content_ids_list)))
+        content_ids_list.sort(key=lambda x: x[1], reverse=True)
+        content_ids = " ".join(map(lambda x: x[0], content_ids_list))
         candidates_data["topic_id"].append(topic_id)
         candidates_data["content_ids"].append(content_ids)
     return pd.DataFrame.from_dict(candidates_data)

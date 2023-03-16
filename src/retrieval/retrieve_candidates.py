@@ -39,19 +39,24 @@ def main(args):
     kd_tree = KDTree(content_X)
     print(f"kd tree fitted", flush=True)
     
-    candidates = kd_tree.query(topics_X, k=args.n_neighbors, return_distance=False)
+    dist, candidates = kd_tree.query(topics_X, k=args.n_neighbors, return_distance=True)
     print(f"candidates shape = {candidates.shape}", flush=True)
     
     data = defaultdict(list)
     
     for i in tqdm(range(len(topics_X))):
+        sz = len(candidates[i])
+        perm = list(range(sz))
+        perm.sort(key=lambda j: dist[i, j])
+        permuted_candidates = [candidates[i, j] for j in perm]
+        
         topic_id = dd["validation_topics"][i]["id"] if i < n_validation_topic_ids else \
             dd["train_topics"][i - n_validation_topic_ids]["id"]
         content_ids = " ".join(
             list(map(
                 lambda j: dd["train_content"][int(j)]["id"] if j < n_train_content_ids else \
                     dd["validation_content"][int(j) - n_train_content_ids]["id"],
-                candidates[i]
+                permuted_candidates
             ))
         )
         data["topic_id"].append(topic_id)

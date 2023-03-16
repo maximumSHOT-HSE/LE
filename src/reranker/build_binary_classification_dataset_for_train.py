@@ -1,6 +1,6 @@
 import argparse
 import json
-from datasets import Dataset, DatasetDict
+from datasets import concatenate_datasets, Dataset, DatasetDict
 import pandas as pd
 from collections import defaultdict
 from tqdm import tqdm
@@ -11,6 +11,7 @@ def get_parser():
     parser.add_argument("--dd-path", type=str, required=True)
     parser.add_argument("--candidates-csv-path", type=str, required=True, help="Path to the csv files with retrieved candidates")
     parser.add_argument("--correlations-csv-path", type=str, required=True, help="Path to the csv file with positive samples")
+    parser.add_argument("--full", type=int, default=0)
     parser.add_argument("--save-path", type=str, required=True, 
                         help="Path to the HF dd built for binary calssification problem will be saved")
     return parser
@@ -83,7 +84,14 @@ def main(args):
         topic_id_to_correlated_content_ids
     )
     
-    DatasetDict({"train": train_ds, "validation": validation_ds}).save_to_disk(args.save_path)
+    dd = DatasetDict({"train": train_ds, "validation": validation_ds})
+    
+    if args.full:
+        dd["train"] = concatenate_datasets([dd["train"], dd["validation"]])
+    
+    print(dd)
+    
+    dd.save_to_disk(args.save_path)
 
 
 if __name__ == "__main__":

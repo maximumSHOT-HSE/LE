@@ -13,7 +13,8 @@ def get_parser():
     parser.add_argument("--exp-dir-path", type=str, required=True, help="Path to the experiment directory")
     parser.add_argument("--st-name", type=str, required=True, help="The name of Sentence Transformer to be trained")
     parser.add_argument("--batch-size", type=int, default=64)
-    parser.add_argument("--num-epochs", type=int, default=10)
+    parser.add_argument("--num-epochs", type=int, default=20)
+    parser.add_argument("--checkpoint_save_steps", type=int, default=5000)
     parser.add_argument("--full", type=int, default=0)
     return parser
 
@@ -38,6 +39,7 @@ def main(args):
             train_examples.append(InputExample(texts=[topic_text, content_text]))
 
     model = SentenceTransformer(args.st_name)
+    model.max_seq_length = 128
     print(model)
     train_dataloader = DataLoader(train_examples, shuffle=True, batch_size=args.batch_size)
     train_loss = losses.MultipleNegativesRankingLoss(model=model)
@@ -48,8 +50,12 @@ def main(args):
         train_objectives=[(train_dataloader, train_loss)],
         epochs=num_epochs,
         save_best_model=True,
-        output_path=os.path.join(args.exp_dir_path, "st_checkpoints"),
-        warmup_steps=warmup_steps
+        output_path=os.path.join(args.exp_dir_path, "st_best_checkpoint"),
+        warmup_steps=warmup_steps,
+        
+        checkpoint_path=os.path.join(args.exp_dir_path, "st_all_checkpoints"),
+        checkpoint_save_steps=args.checkpoint_save_steps,
+        checkpoint_save_total_limit=3
     )
 
 
